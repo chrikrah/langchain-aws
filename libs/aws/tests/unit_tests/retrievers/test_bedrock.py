@@ -704,6 +704,27 @@ def test_retriever_managed_kb_invoke(amazon_retriever_managed, mock_client):
     assert documents[1].metadata["score"] == 0.95
 
 
+def test_retriever_sends_next_token_beside_retrieval_configuration(mock_client):
+    retriever = AmazonKnowledgeBasesRetriever(
+        knowledge_base_id="test_kb_id",
+        retrieval_config=RetrievalConfig(
+            vectorSearchConfiguration=VectorSearchConfig(numberOfResults=2),
+            nextToken="page-2",
+        ),
+        client=mock_client,
+    )
+    mock_client.retrieve.return_value = {"retrievalResults": []}
+
+    retriever.invoke("test query")
+
+    mock_client.retrieve.assert_called_once_with(
+        retrievalQuery={"text": "test query"},
+        knowledgeBaseId="test_kb_id",
+        retrievalConfiguration={"vectorSearchConfiguration": {"numberOfResults": 2}},
+        nextToken="page-2",
+    )
+
+
 def test_retriever_managed_kb_dict_config(mock_client):
     """Test managed KB retrieval using dict-based config."""
     retriever = AmazonKnowledgeBasesRetriever(

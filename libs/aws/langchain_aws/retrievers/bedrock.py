@@ -247,9 +247,15 @@ class AmazonKnowledgeBasesRetriever(BaseRetriever):
             if isinstance(self.retrieval_config, dict):
                 request["retrievalConfiguration"] = self.retrieval_config
             else:
-                request["retrievalConfiguration"] = self.retrieval_config.model_dump(
+                retrieval_configuration = self.retrieval_config.model_dump(
                     exclude_none=True, by_alias=True
                 )
+                # The Retrieve API takes nextToken beside retrievalConfiguration,
+                # not inside it.
+                next_token = retrieval_configuration.pop("nextToken", None)
+                if next_token is not None:
+                    request["nextToken"] = next_token
+                request["retrievalConfiguration"] = retrieval_configuration
         return request
 
     @staticmethod
